@@ -22,6 +22,9 @@
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
+#include "BMI088.h"
+#include "bsp_print.h"
+#include "spi.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -45,7 +48,8 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-
+BMI088 imu;
+//SPI_HandleTypeDef hspi1;
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
@@ -57,7 +61,8 @@ const osThreadAttr_t defaultTask_attributes = {
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-
+__weak void RTOS_Init(void) {}
+__weak void RTOS_Default_Task(const void *argument) { UNUSED(argument); }
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
@@ -71,6 +76,9 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
   */
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
+	RTOS_Init();
+//	BMI088_Init(&imu, &hspi1, GPIOB, SPI1_CS_ACC_Pin, GPIOA, SPI1_CS_GYRO_Pin);
+//	print_use_uart(&huart1);
 
   /* USER CODE END Init */
 
@@ -114,10 +122,37 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
-  /* Infinite loop */
+
+	RTOS_Default_Task(argument);
+//	uint8_t intensity = 0;
+//	uint8_t add_intensity = 1;
+
+	/* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+//	  if (add_intensity) {
+//		  intensity += 5;
+//	  } else {
+//		  intensity -= 5;
+//	  }
+//
+//	  htim3.Instance->CCR4 = 100 - intensity;
+//
+//	  if (intensity >= 100) {
+//		  add_intensity = 0;
+//	  } else if (intensity <= 0) {
+//		  HAL_Delay(500);
+//		  add_intensity = 1;
+//	  }
+//
+////	  print("Intensity: %d\r\n", intensity);
+//
+//	  HAL_Delay(50);
+//	  print("%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\r\n", imu.acc_mps2[0], imu.acc_mps2[1], imu.acc_mps2[2],
+//	  					  	  	  	  	  	  	  	  	  	  	  	   imu.gyr_rps[0], imu.gyr_rps[1], imu.gyr_rps[2]);
+//	  print("test\r\n");
+
+	  HAL_Delay(1);
   }
   /* USER CODE END StartDefaultTask */
 }

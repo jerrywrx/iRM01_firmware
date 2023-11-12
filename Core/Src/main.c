@@ -27,7 +27,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "../../Shared/libraries/Inc/BMI088.h"
+#include "BMI088.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -48,7 +48,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+//BMI088 imu;
+//SPI_HandleTypeDef hspi1;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -60,7 +61,49 @@ void MX_FREERTOS_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+//void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
+//
+//	if (hspi->Instance == SPI1) {
+//
+//		if (imu.readingAcc) {
+//
+//			BMI088_ReadAccelerometerDMA_Complete(&imu);
+//
+//			/* Filter accelerometer data */
+//		//	RCFilter_Update(&lpfAcc[0], imu.acc_mps2[0]);
+//		//	RCFilter_Update(&lpfAcc[1], imu.acc_mps2[1]);
+//		//	RCFilter_Update(&lpfAcc[2], imu.acc_mps2[2]);
+//
+//		}
+//
+//		if (imu.readingGyr) {
+//
+//			BMI088_ReadGyroscopeDMA_Complete(&imu);
+//
+//			/* Filter gyroscope data */
+//		//	RCFilter_Update(&lpfGyr[0], imu.gyr_rps[0]);
+//		//	RCFilter_Update(&lpfGyr[1], imu.gyr_rps[1]);
+//		//	RCFilter_Update(&lpfGyr[2], imu.gyr_rps[2]);
+//
+//		}
+//
+//	}
+//
+//}
+//
+//void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+//
+//	if (GPIO_Pin == INT1_ACC_Pin) {
+//
+//		BMI088_ReadAccelerometerDMA(&imu);
+//
+//	} else if (GPIO_Pin == INT1_GYR_Pin) {
+//
+//		BMI088_ReadGyroscopeDMA(&imu);
+//
+//	}
+//
+//}
 /* USER CODE END 0 */
 
 /**
@@ -96,9 +139,12 @@ int main(void)
   MX_SPI1_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+
+//  print_use_uart(&huart1);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
-  uint8_t intensity = 0;
-  uint8_t add_intensity = 1;
+//  uint8_t intensity = 0;
+//  uint8_t add_intensity = 1;
+
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -117,22 +163,24 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	  if (add_intensity) {
-		  intensity += 5;
-	  } else {
-		  intensity -= 5;
-	  }
-
-	  htim3.Instance->CCR4 = 100 - intensity;
-
-	  if (intensity >= 100) {
-		  add_intensity = 0;
-	  } else if (intensity <= 0) {
-		  HAL_Delay(2000);
-		  add_intensity = 1;
-	  }
-
-	  HAL_Delay(50);
+//	  if (add_intensity) {
+//		  intensity += 5;
+//	  } else {
+//		  intensity -= 5;
+//	  }
+//
+//	  htim3.Instance->CCR4 = 100 - intensity;
+//
+//	  if (intensity >= 100) {
+//		  add_intensity = 0;
+//	  } else if (intensity <= 0) {
+//		  HAL_Delay(2000);
+//		  add_intensity = 1;
+//	  }
+//
+////	  print("Intensity: %d\r\n", intensity);
+//
+//	  HAL_Delay(50);
 
   }
   /* USER CODE END 3 */

@@ -164,3 +164,7 @@ compile_commands.json
 # Vim
 *.swp
 .cache
+.settings
+Debug/*
+Release/*
+.settings
