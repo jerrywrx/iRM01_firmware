@@ -22,9 +22,6 @@
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
-#include "BMI088.h"
-#include "bsp_print.h"
-#include "spi.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -48,7 +45,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-BMI088 imu;
+//BMI088 imu;
 //SPI_HandleTypeDef hspi1;
 /* USER CODE END Variables */
 /* Definitions for defaultTask */

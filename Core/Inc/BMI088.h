@@ -85,10 +85,15 @@ uint8_t BMI088_ReadGyroscope(BMI088 *imu);
  * DMA
  *
  */
+
+/* Start accelerometer DMA transaction */
 uint8_t BMI088_ReadAccelerometerDMA(BMI088 *imu);
+/* Data processing after DMA transaction is complete*/
 void 	BMI088_ReadAccelerometerDMA_Complete(BMI088 *imu);
 
+/* Start gyroscope DMA transaction */
 uint8_t BMI088_ReadGyroscopeDMA(BMI088 *imu);
+/* Data processing after DMA transaction is complete*/
 void 	BMI088_ReadGyroscopeDMA_Complete(BMI088 *imu);
 
 #endif

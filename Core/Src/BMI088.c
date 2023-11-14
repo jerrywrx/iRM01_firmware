@@ -260,8 +260,10 @@ uint8_t BMI088_ReadGyroscope(BMI088 *imu) {
  */
 uint8_t BMI088_ReadAccelerometerDMA(BMI088 *imu) {
 
+	/* pull accelerometer's CS to low to enable transmission*/
 	HAL_GPIO_WritePin(imu->csAccPinBank, imu->csAccPin, GPIO_PIN_RESET);
 
+	/* initiate an SPI transmit-receive operation using DMA */
 	if (HAL_SPI_TransmitReceive_DMA(imu->spiHandle, imu->accTxBuf, (uint8_t *) imu->accRxBuf, 8) == HAL_OK) {
 		imu->readingAcc = 1;
 		return 1;
@@ -292,8 +294,10 @@ void BMI088_ReadAccelerometerDMA_Complete(BMI088 *imu) {
 
 uint8_t BMI088_ReadGyroscopeDMA(BMI088 *imu) {
 
+	/* pull gyroscope's CS to low to enable transmission*/
 	HAL_GPIO_WritePin(imu->csGyrPinBank, imu->csGyrPin, GPIO_PIN_RESET);
 
+	/* initiate an SPI transmit-receive operation using DMA */
 	if (HAL_SPI_TransmitReceive_DMA(imu->spiHandle, imu->gyrTxBuf, (uint8_t *) imu->gyrRxBuf, 7) == HAL_OK) {
 		imu->readingGyr = 1;
 		return 1;
