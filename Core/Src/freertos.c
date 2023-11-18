@@ -53,16 +53,34 @@ osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityLow,
+};
+/* Definitions for ledTask */
+osThreadId_t ledTaskHandle;
+const osThreadAttr_t ledTask_attributes = {
+  .name = "ledTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityBelowNormal,
+};
+/* Definitions for imuTask */
+osThreadId_t imuTaskHandle;
+const osThreadAttr_t imuTask_attributes = {
+  .name = "imuTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityRealtime,
 };
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
 __weak void RTOS_Init(void) {}
 __weak void RTOS_Default_Task(const void *argument) { UNUSED(argument); }
+__weak void imuTask(const void *argument) { UNUSED(argument); }
+__weak void ledTask(const void *argument) { UNUSED(argument); }
 /* USER CODE END FunctionPrototypes */
 
-void StartDefaultTask(void *argument);
+void DefaultTaskStart(void *argument);
+void ledTaskStart(void *argument);
+void imuTaskStart(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -97,7 +115,13 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+  defaultTaskHandle = osThreadNew(DefaultTaskStart, NULL, &defaultTask_attributes);
+
+  /* creation of ledTask */
+  ledTaskHandle = osThreadNew(ledTaskStart, NULL, &ledTask_attributes);
+
+  /* creation of imuTask */
+  imuTaskHandle = osThreadNew(imuTaskStart, NULL, &imuTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -109,49 +133,62 @@ void MX_FREERTOS_Init(void) {
 
 }
 
-/* USER CODE BEGIN Header_StartDefaultTask */
+/* USER CODE BEGIN Header_DefaultTaskStart */
 /**
   * @brief  Function implementing the defaultTask thread.
   * @param  argument: Not used
   * @retval None
   */
-/* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument)
+/* USER CODE END Header_DefaultTaskStart */
+void DefaultTaskStart(void *argument)
 {
-  /* USER CODE BEGIN StartDefaultTask */
-
+  /* USER CODE BEGIN DefaultTaskStart */
 	RTOS_Default_Task(argument);
-//	uint8_t intensity = 0;
-//	uint8_t add_intensity = 1;
-
-	/* Infinite loop */
+  /* Infinite loop */
   for(;;)
   {
-//	  if (add_intensity) {
-//		  intensity += 5;
-//	  } else {
-//		  intensity -= 5;
-//	  }
-//
-//	  htim3.Instance->CCR4 = 100 - intensity;
-//
-//	  if (intensity >= 100) {
-//		  add_intensity = 0;
-//	  } else if (intensity <= 0) {
-//		  HAL_Delay(500);
-//		  add_intensity = 1;
-//	  }
-//
-////	  print("Intensity: %d\r\n", intensity);
-//
-//	  HAL_Delay(50);
-//	  print("%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\r\n", imu.acc_mps2[0], imu.acc_mps2[1], imu.acc_mps2[2],
-//	  					  	  	  	  	  	  	  	  	  	  	  	   imu.gyr_rps[0], imu.gyr_rps[1], imu.gyr_rps[2]);
-//	  print("test\r\n");
-
-	  HAL_Delay(1);
+    osDelay(1);
   }
-  /* USER CODE END StartDefaultTask */
+  /* USER CODE END DefaultTaskStart */
+}
+
+/* USER CODE BEGIN Header_ledTaskStart */
+/**
+* @brief Function implementing the ledTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_ledTaskStart */
+void ledTaskStart(void *argument)
+{
+  /* USER CODE BEGIN ledTaskStart */
+	ledTask(argument);
+  /* Infinite loop */
+
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END ledTaskStart */
+}
+
+/* USER CODE BEGIN Header_imuTaskStart */
+/**
+* @brief Function implementing the imuTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_imuTaskStart */
+void imuTaskStart(void *argument)
+{
+  /* USER CODE BEGIN imuTaskStart */
+	imuTask(argument);
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END imuTaskStart */
 }
 
 /* Private application code --------------------------------------------------*/

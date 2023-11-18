@@ -139,12 +139,7 @@ int main(void)
   MX_SPI1_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-
-//  print_use_uart(&huart1);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
-//  uint8_t intensity = 0;
-//  uint8_t add_intensity = 1;
-
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -162,26 +157,6 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
-//	  if (add_intensity) {
-//		  intensity += 5;
-//	  } else {
-//		  intensity -= 5;
-//	  }
-//
-//	  htim3.Instance->CCR4 = 100 - intensity;
-//
-//	  if (intensity >= 100) {
-//		  add_intensity = 0;
-//	  } else if (intensity <= 0) {
-//		  HAL_Delay(2000);
-//		  add_intensity = 1;
-//	  }
-//
-////	  print("Intensity: %d\r\n", intensity);
-//
-//	  HAL_Delay(50);
-
   }
   /* USER CODE END 3 */
 }

@@ -55,6 +55,8 @@ void Error_Handler(void);
 /* USER CODE BEGIN EFP */
 void RTOS_Init(void);
 void RTOS_Default_Task(const void *argument);
+void imuTask(const void *argument);
+void ledTask(const void *argument);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
