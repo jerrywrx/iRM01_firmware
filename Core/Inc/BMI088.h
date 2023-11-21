@@ -2,6 +2,7 @@
 #define BMI088_IMU_H
 
 #include "stm32f1xx_hal.h"
+#include <math.h>
 
 /* Register defines */
 #define BMI_ACC_CHIP_ID 		0x00
@@ -23,6 +24,17 @@
 #define	BMI_GYR_INT_CTRL		0x15
 #define	BMI_INT3_INT4_IO_CONF	0x16
 #define BMI_INT3_INT4_IO_MAP	0x18
+
+#define BMI088_ACCEL_3G_SEN 0.0008974358974f
+#define BMI088_ACCEL_6G_SEN 0.00179443359375f
+#define BMI088_ACCEL_12G_SEN 0.0035888671875f
+#define BMI088_ACCEL_24G_SEN 0.007177734375f
+
+#define BMI088_GYRO_2000_SEN 0.00106526443603169529841533860381f
+#define BMI088_GYRO_1000_SEN 0.00053263221801584764920766930190693f
+#define BMI088_GYRO_500_SEN 0.00026631610900792382460383465095346f
+#define BMI088_GYRO_250_SEN 0.00013315805450396191230191732547673f
+#define BMI088_GYRO_125_SEN 0.000066579027251980956150958662738366f
 
 typedef struct {
 
@@ -49,42 +61,29 @@ typedef struct {
 	float acc_mps2[3];
 	float gyr_rps[3];
 
+	float INS_quat[4];
+	float INS_euler[3];
+
 } BMI088;
 
-/*
- *
- * INITIALISATION
- *
- */
+/****** INITIALISATION ******/
 uint8_t BMI088_Init(BMI088 *imu,
 				 SPI_HandleTypeDef *spiHandle,
 				 GPIO_TypeDef *csAccPinBank, uint16_t csAccPin,
 				 GPIO_TypeDef *csGyrPinBank, uint16_t csGyrPin);
 
-/*
- *
- * LOW-LEVEL REGISTER FUNCTIONS
- *
- */
+/****** LOW-LEVEL REGISTER FUNCTIONS ******/
 uint8_t BMI088_ReadAccRegister(BMI088 *imu, uint8_t regAddr, uint8_t *data);
 uint8_t BMI088_ReadGyrRegister(BMI088 *imu, uint8_t regAddr, uint8_t *data);
 
 uint8_t BMI088_WriteAccRegister(BMI088 *imu, uint8_t regAddr, uint8_t data);
 uint8_t BMI088_WriteGyrRegister(BMI088 *imu, uint8_t regAddr, uint8_t data);
 
-/*
- *
- * POLLING
- *
- */
+/****** POLLING ******/
 uint8_t BMI088_ReadAccelerometer(BMI088 *imu);
 uint8_t BMI088_ReadGyroscope(BMI088 *imu);
 
-/*
- *
- * DMA
- *
- */
+/****** DMA ******/
 
 /* Start accelerometer DMA transaction */
 uint8_t BMI088_ReadAccelerometerDMA(BMI088 *imu);
@@ -95,5 +94,8 @@ void 	BMI088_ReadAccelerometerDMA_Complete(BMI088 *imu);
 uint8_t BMI088_ReadGyroscopeDMA(BMI088 *imu);
 /* Data processing after DMA transaction is complete*/
 void 	BMI088_ReadGyroscopeDMA_Complete(BMI088 *imu);
+
+/****** HELPER FUNCTIONS ******/
+void GetEulerAngle(float* q, float* yaw, float* pitch, float* roll);
 
 #endif

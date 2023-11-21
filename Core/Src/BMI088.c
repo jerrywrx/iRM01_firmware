@@ -73,7 +73,8 @@ uint8_t BMI088_Init(BMI088 *imu,
 	HAL_Delay(10);
 
 	/* Pre-compute accelerometer conversion constant (raw to m/s^2) */
-	imu->accConversion = 9.81f / 32768.0f * 2.0f * 1.5f; /* Datasheet page 27 */
+	// imu->accConversion = 9.81f / 32768.0f * 2.0f * 1.5f; /* Datasheet page 27 */
+	imu->accConversion = BMI088_ACCEL_3G_SEN;
 	
 	/* Set accelerometer TX buffer for DMA */
 	imu->accTxBuf[0] = BMI_ACC_DATA | 0x80;
@@ -118,7 +119,8 @@ uint8_t BMI088_Init(BMI088 *imu,
 	HAL_Delay(10);
 
 	/* Pre-compute gyroscope conversion constant (raw to rad/s) */
-	imu->gyrConversion = 0.01745329251f * 1000.0f / 32768.0f; /* Datasheet page 39 */
+	// imu->gyrConversion = 0.01745329251f * 1000.0f / 32768.0f; /* Datasheet page 39 */
+	imu->gyrConversion = BMI088_GYRO_2000_SEN;
 	
 	/* Set gyroscope TX buffer for DMA */
 	imu->gyrTxBuf[0] = BMI_GYR_DATA | 0x80;
@@ -324,4 +326,10 @@ void BMI088_ReadGyroscopeDMA_Complete(BMI088 *imu) {
 	imu->gyr_rps[1] = imu->gyrConversion * gyrY;
 	imu->gyr_rps[2] = imu->gyrConversion * gyrZ;
 
+}
+
+void GetEulerAngle(float* q, float* yaw, float* pitch, float* roll) {
+  *yaw = atan2f(2.0f * (q[0] * q[3] + q[1] * q[2]), 2.0f * (q[0] * q[0] + q[1] * q[1]) - 1.0f);
+  *pitch = asinf(-2.0f * (q[1] * q[3] - q[0] * q[2]));
+  *roll = atan2f(2.0f * (q[0] * q[1] + q[2] * q[3]), 2.0f * (q[0] * q[0] + q[3] * q[3]) - 1.0f);
 }

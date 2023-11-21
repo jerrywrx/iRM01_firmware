@@ -199,29 +199,6 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 
-//uint8_t BMI088_GyroRead(uint_8_t addr, uint8_t* data) {
-//  uint8_t txbuf[2] = {(addr | 0x80), 0};
-//  uint8_t rxbuf[2];
-//
-//  HAL_GPIO_WritePin(SPI1_CS_GYRO_GPIO_Port, SPI1_CS_GYRO_Pin, GPIO_PIN_RESET);
-//  uint8_t status = (HAL_SPI_TransmitReceive(&hspi1, txbuf, rxbuf, 2, HAL_MAX_DELAY) == HAL_OK);
-//  HAL_GPIO_WritePin(SPI1_CS_GYRO_GPIO_Port, SPI1_CS_GYRO_Pin, GPIO_PIN_SET);
-//
-//  *data = rxbuf[1];
-//
-//  return status;
-//}
-//
-//uint8_t BMI088_GyroWrite(uint_8_t addr, uint8_t data) {
-//  uint8_t txbuf[2] = {addr, data};
-//
-//  HAL_GPIO_WritePin(SPI1_CS_GYRO_GPIO_Port, SPI1_CS_GYRO_Pin, GPIO_PIN_RESET);
-//  uint8_t status = (HAL_SPI_Transmit(&hspi1, txbuf, rxbuf, 2, HAL_MAX_DELAY) == HAL_OK);
-//  HAL_GPIO_WritePin(SPI1_CS_GYRO_GPIO_Port, SPI1_CS_GYRO_Pin, GPIO_PIN_SET);
-//
-//  return status;
-//}
-
 /* USER CODE END 4 */
 
 /**
