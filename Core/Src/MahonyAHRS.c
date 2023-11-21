@@ -21,7 +21,7 @@
 //---------------------------------------------------------------------------------------------------
 // Definitions
 
-#define sampleFreq	1000.0f			// sample frequency in Hz
+#define sampleFreq	512.0f			// sample frequency in Hz
 #define twoKpDef	(2.0f * 0.5f)	// 2 * proportional gain
 #define twoKiDef	(2.0f * 0.0f)	// 2 * integral gain
 
@@ -164,6 +164,8 @@ void MahonyAHRSupdateIMU(float q[4], float gx, float gy, float gz, float ax, flo
 		az *= recipNorm;        
 
 		// Estimated direction of gravity and vector perpendicular to magnetic flux
+		// Half of the last column of matrix C_{R->b}. A factor of 2 is added in twoKp and twoKi to compensate for this.
+		// This reduces the number of multiplication operations
 		halfvx = q[1] * q[3] - q[0] * q[2];
 		halfvy = q[0] * q[1] + q[2] * q[3];
 		halfvz = q[0] * q[0] - 0.5f + q[3] * q[3];

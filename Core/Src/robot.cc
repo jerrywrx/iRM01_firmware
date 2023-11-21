@@ -82,7 +82,8 @@ void imuTask(const void* args){
 
 		print("yaw: %.3f, pitch: %.3f, roll: %.3f\r\n", imu.INS_euler[0], imu.INS_euler[1], imu.INS_euler[2]);
 
-		HAL_Delay(10);
+		HAL_Delay(1);
+
 	}
 }
 
@@ -118,5 +119,7 @@ void ledTask(const void* args){
 
 void RTOS_Default_Task(const void* args) {
 	UNUSED(args);
+
+//	print("yaw: %.3f, pitch: %.3f, roll: %.3f\r\n", imu.INS_euler[0], imu.INS_euler[1], imu.INS_euler[2]);
 
 }
