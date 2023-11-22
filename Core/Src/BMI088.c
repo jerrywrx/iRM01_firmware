@@ -260,6 +260,10 @@ uint8_t BMI088_ReadGyroscope(BMI088 *imu) {
  * DMA
  *
  */
+
+float BMI088_ACCEL_SEN = BMI088_ACCEL_3G_SEN;
+float BMI088_GYRO_SEN = BMI088_GYRO_2000_SEN;
+
 uint8_t BMI088_ReadAccelerometerDMA(BMI088 *imu) {
 
 	/* pull accelerometer's CS to low to enable transmission*/
@@ -288,9 +292,9 @@ void BMI088_ReadAccelerometerDMA_Complete(BMI088 *imu) {
 	int16_t accZ = (int16_t) ((imu->accRxBuf[7] << 8) | imu->accRxBuf[6]);
 
 	/* Convert to m/s^2 */
-	imu->acc_mps2[0] = imu->accConversion * accX;
-	imu->acc_mps2[1] = imu->accConversion * accY;
-	imu->acc_mps2[2] = imu->accConversion * accZ;
+	imu->acc_mps2[0] = BMI088_ACCEL_SEN * accX;
+	imu->acc_mps2[1] = BMI088_ACCEL_SEN * accY;
+	imu->acc_mps2[2] = BMI088_ACCEL_SEN * accZ;
 
 }
 
@@ -322,9 +326,9 @@ void BMI088_ReadGyroscopeDMA_Complete(BMI088 *imu) {
 	int16_t gyrZ = (int16_t) ((imu->gyrRxBuf[6] << 8) | imu->gyrRxBuf[5]);
 
 	/* Convert to deg/s */
-	imu->gyr_rps[0] = imu->gyrConversion * gyrX;
-	imu->gyr_rps[1] = imu->gyrConversion * gyrY;
-	imu->gyr_rps[2] = imu->gyrConversion * gyrZ;
+	imu->gyr_rps[0] = BMI088_GYRO_SEN * gyrX;
+	imu->gyr_rps[1] = BMI088_GYRO_SEN * gyrY;
+	imu->gyr_rps[2] = BMI088_GYRO_SEN * gyrZ;
 
 }
 

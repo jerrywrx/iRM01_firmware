@@ -80,6 +80,7 @@ void imuTask(const void* args){
 //		 print("acc0: %.3f, acc1: %.3f, acc2: %.3f, gyr0: %.3f, gyr1: %.3f, gyr2: %.3f\r\n",
 //		   imu.acc_mps2[0], imu.acc_mps2[1], imu.acc_mps2[2], imu.gyr_rps[0], imu.gyr_rps[1], imu.gyr_rps[2]);
 
+//		print("yaw: %.3f, pitch: %.3f, roll: %.3f\r\n", imu.INS_euler[0] / PI * 180, imu.INS_euler[1] / PI * 180, imu.INS_euler[2] / PI * 180);
 		print("yaw: %.3f, pitch: %.3f, roll: %.3f\r\n", imu.INS_euler[0], imu.INS_euler[1], imu.INS_euler[2]);
 
 		HAL_Delay(1);
