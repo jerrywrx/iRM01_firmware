@@ -162,7 +162,7 @@ void DefaultTaskStart(void *argument)
 void ledTaskStart(void *argument)
 {
   /* USER CODE BEGIN ledTaskStart */
-	ledTask(argument);
+//	ledTask(argument);
   /* Infinite loop */
 
   for(;;)
@@ -182,7 +182,7 @@ void ledTaskStart(void *argument)
 void imuTaskStart(void *argument)
 {
   /* USER CODE BEGIN imuTaskStart */
-	imuTask(argument);
+//	imuTask(argument);
   /* Infinite loop */
   for(;;)
   {

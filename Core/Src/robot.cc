@@ -5,6 +5,14 @@
 #include "BMI088.h"
 #include "spi.h"
 #include "MahonyAHRS.h"
+#include "cmsis_os.h"
+#include "controller.h"
+#include "motor.h"
+
+#define TARGET_SPEED 30
+
+bsp::CAN* can = nullptr;
+control::MotorCANBase* motor = nullptr;
 
 BMI088 imu;
 
@@ -54,6 +62,9 @@ void RTOS_Init() {
 
 	/* Initialise inertial measurement unit */
 	BMI088_Init(&imu, &hspi1, GPIOB, SPI1_CS_ACC_Pin, GPIOA, SPI1_CS_GYRO_Pin);
+
+	can = new bsp::CAN(&hcan, true);
+	motor = new control::Motor3508(can, 0x201);
 }
 
 void imuTask(const void* args){
@@ -120,6 +131,15 @@ void ledTask(const void* args){
 
 void RTOS_Default_Task(const void* args) {
 	UNUSED(args);
+
+    control::MotorCANBase* motors[] = {motor};
+
+	while (true) {
+		motor->SetOutput(30);
+//		motor->PrintData();
+		control::MotorCANBase::TransmitOutput(motors, 1);
+		osDelay(10);
+	}
 
 //	print("yaw: %.3f, pitch: %.3f, roll: %.3f\r\n", imu.INS_euler[0], imu.INS_euler[1], imu.INS_euler[2]);
 
