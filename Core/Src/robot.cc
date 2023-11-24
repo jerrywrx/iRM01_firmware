@@ -133,14 +133,15 @@ void RTOS_Default_Task(const void* args) {
 	UNUSED(args);
 
     control::MotorCANBase* motors[] = {motor};
+//    control::PIDController pid(20, 15, 30);
 
 	while (true) {
-		motor->SetOutput(30);
-//		motor->PrintData();
-		control::MotorCANBase::TransmitOutput(motors, 1);
-		osDelay(10);
+//        float diff = motor->GetOmegaDelta(TARGET_SPEED);
+//        int16_t out = pid.ComputeConstrainedOutput(diff);
+        motor->SetOutput(200);
+        control::MotorCANBase::TransmitOutput(motors, 1);
+        osDelay(10);
 	}
 
-//	print("yaw: %.3f, pitch: %.3f, roll: %.3f\r\n", imu.INS_euler[0], imu.INS_euler[1], imu.INS_euler[2]);
 
 }

@@ -92,9 +92,6 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
 	RTOS_Init();
-//	BMI088_Init(&imu, &hspi1, GPIOB, SPI1_CS_ACC_Pin, GPIOA, SPI1_CS_GYRO_Pin);
-//	print_use_uart(&huart1);
-
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
