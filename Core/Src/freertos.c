@@ -140,7 +140,7 @@ void MX_FREERTOS_Init(void) {
 void DefaultTaskStart(void *argument)
 {
   /* USER CODE BEGIN DefaultTaskStart */
-	RTOS_Default_Task(argument);
+//	RTOS_Default_Task(argument);
   /* Infinite loop */
   for(;;)
   {
@@ -159,7 +159,7 @@ void DefaultTaskStart(void *argument)
 void ledTaskStart(void *argument)
 {
   /* USER CODE BEGIN ledTaskStart */
-//	ledTask(argument);
+	ledTask(argument);
   /* Infinite loop */
 
   for(;;)

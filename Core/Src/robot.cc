@@ -9,7 +9,7 @@
 #include "controller.h"
 #include "motor.h"
 
-#define TARGET_SPEED 30
+#define TARGET_SPEED 5
 
 bsp::CAN* can = nullptr;
 control::MotorCANBase* motor = nullptr;
@@ -104,6 +104,7 @@ void ledTask(const void* args){
 
 	uint8_t intensity = 0;
 	uint8_t add_intensity = 1;
+    uint8_t pin_state = 0;
 
 	while (true) {
 		if (add_intensity) {
@@ -117,11 +118,17 @@ void ledTask(const void* args){
 		if (intensity >= 100) {
 			add_intensity = 0;
 		} else if (intensity <= 0) {
-			HAL_Delay(500);
 			add_intensity = 1;
 		}
 
-		print("Intensity: %d\r\n", intensity);
+        pin_state = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13);
+        if (pin_state) {
+        	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);
+        } else {
+        	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
+        }
+
+        print("Intensity: %d   Pin state: %d\r\n", intensity, pin_state);
 
 		HAL_Delay(50);
 	}
@@ -133,13 +140,14 @@ void RTOS_Default_Task(const void* args) {
 	UNUSED(args);
 
     control::MotorCANBase* motors[] = {motor};
-//    control::PIDController pid(20, 15, 30);
+    control::PIDController pid(20, 15, 30);
 
 	while (true) {
-//        float diff = motor->GetOmegaDelta(TARGET_SPEED);
-//        int16_t out = pid.ComputeConstrainedOutput(diff);
-        motor->SetOutput(200);
+        float diff = motor->GetOmegaDelta(TARGET_SPEED);
+        int16_t out = pid.ComputeConstrainedOutput(diff);
+        motor->SetOutput(out);
         control::MotorCANBase::TransmitOutput(motors, 1);
+        print("Diff: %f  Output: %d\r\n", diff, out);
         osDelay(10);
 	}
 
