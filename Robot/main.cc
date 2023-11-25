@@ -10,10 +10,11 @@
 
 #define TARGET_SPEED 30
 
+static BoolEdgeDetector init(false);
+
 bsp::CAN* can = nullptr;
 control::MotorCANBase* motor = nullptr;
-static BoolEdgeDetector motor_start(false);
-
+control::Motor4310* leg_motor = nullptr;
 BMI088 imu;
 
 /* callback triggered by an external interrupt on a GPIO pin*/
@@ -48,7 +49,12 @@ void RTOS_Init() {
 
 	can = new bsp::CAN(&hcan, true);
 	motor = new control::Motor3508(can, 0x201);
+    leg_motor = new control::Motor4310(can, 0x02, 0x01, control::MIT);
 }
+
+
+uint16_t zeroDriftTry = 1000;
+bool calibrated = false;
 
 void imuTask(const void* args){
 	UNUSED(args);
@@ -64,43 +70,74 @@ void imuTask(const void* args){
 	imu.INS_euler[1] = 0.0f;
 	imu.INS_euler[2] = 0.0f;
 
+//    uint16_t count = 0;
+//
+//    float zeroDriftSum[3] = {0.0f, 0.0f, 0.0f};
+//    float zeroDrift[3] = {0.0f, 0.0f, 0.0f};
+
+//    while (true) {
+//		init.input(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13));
+//		if (init.negEdge()){
+//			calibrated = true;
+//			break;
+//		}
+//	}
+
 	while (true) {
+//        if (calibrated) {
+//            if (++count < zeroDriftTry) {
+//                for (int i = 0; i < 3; i++) {
+//                    zeroDriftSum[i] += imu.gyr_rps[i];
+//                }
+//                continue;
+//            } else if (count == zeroDriftTry) {
+//                for (int i = 0; i < 3; ++i) {
+//                    zeroDrift[i] = zeroDriftSum[i] / (float)zeroDriftTry;
+//                }
+//                continue;
+//            }
+//            for (int i = 0; i < 3; ++i) {
+//                imu.gyr_rps[i] -= zeroDrift[i];
+//            }
 
-		MahonyAHRSupdateIMU(imu.INS_quat, imu.gyr_rps[0], imu.gyr_rps[1], imu.gyr_rps[2], imu.acc_mps2[0],
-		   imu.acc_mps2[1], imu.acc_mps2[2]);
+            MahonyAHRSupdateIMU(imu.INS_quat, imu.gyr_rps[0], imu.gyr_rps[1], imu.gyr_rps[2], imu.acc_mps2[0],
+               imu.acc_mps2[1], imu.acc_mps2[2]);
 
-		GetEulerAngle(imu.INS_quat, &imu.INS_euler[0], &imu.INS_euler[1], &imu.INS_euler[2]);
+            GetEulerAngle(imu.INS_quat, &imu.INS_euler[0], &imu.INS_euler[1], &imu.INS_euler[2]);
 
-//		print("acc0: %.3f, acc1: %.3f, acc2: %.3f, gyr0: %.3f, gyr1: %.3f, gyr2: %.3f\r\n",
-//		   imu.acc_mps2[0], imu.acc_mps2[1], imu.acc_mps2[2], imu.gyr_rps[0], imu.gyr_rps[1], imu.gyr_rps[2]);
-
-		print("yaw: %.3f, pitch: %.3f, roll: %.3f\r\n", imu.INS_euler[0] / PI * 180, imu.INS_euler[1] / PI * 180, imu.INS_euler[2] / PI * 180);
-
-//		print("yaw: %.3f, pitch: %.3f, roll: %.3f\r\n", imu.INS_euler[0], imu.INS_euler[1], imu.INS_euler[2]);
-
-		HAL_Delay(1);
-
+            HAL_Delay(1);
+//        }
 	}
 }
 
+bool motor_start = false;
 void chassisTask(const void* args){
 	UNUSED(args);
 
     while (true) {
-        motor_start.input(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13));
-        if (motor_start.negEdge())
+        init.input(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13));
+        if (init.negEdge()) {
+            motor_start = true;
             break;
+        }
     }
 
     control::MotorCANBase* motors[] = {motor};
     control::PIDController pid(20, 15, 30);
+    control::Motor4310* leg_motors[] = {leg_motor};
+
+    leg_motor->SetZeroPos();
+    leg_motor->MotorEnable();
 
 	while (true) {
         float diff = motor->GetOmegaDelta(TARGET_SPEED);
         int16_t out = pid.ComputeConstrainedOutput(diff);
         motor->SetOutput(out);
         control::MotorCANBase::TransmitOutput(motors, 1);
-//        print("Diff: %f  Output: %d\r\n", diff, out);
+
+        leg_motor->SetOutput(0, 1, 0, 0.5, 0);
+        control::Motor4310::TransmitOutput(leg_motors, 1);
+
         osDelay(10);
 	}
 }
@@ -145,5 +182,16 @@ void ledTask(const void* args){
 void RTOS_Default_Task(const void* args) {
 	UNUSED(args);
 
+    while (true) {
+//        print("acc0: %.3f, acc1: %.3f, acc2: %.3f, gyr0: %.3f, gyr1: %.3f, gyr2: %.3f\r\n",
+//            imu.acc_mps2[0], imu.acc_mps2[1], imu.acc_mps2[2], imu.gyr_rps[0], imu.gyr_rps[1], imu.gyr_rps[2]);
+
+    	clear_screen();
+        set_cursor(0, 0);
+
+    	print("motor_start: %d\r\n", motor_start);
+        print("yaw: %.3f, pitch: %.3f, roll: %.3f\r\n", imu.INS_euler[0] / PI * 180, imu.INS_euler[1] / PI * 180, imu.INS_euler[2] / PI * 180);
+        HAL_Delay(10);
+    }
 
 }
