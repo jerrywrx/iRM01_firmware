@@ -60,14 +60,21 @@ osThreadId_t ledTaskHandle;
 const osThreadAttr_t ledTask_attributes = {
   .name = "ledTask",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityBelowNormal,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for imuTask */
 osThreadId_t imuTaskHandle;
 const osThreadAttr_t imuTask_attributes = {
   .name = "imuTask",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityRealtime,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for chassisTask */
+osThreadId_t chassisTaskHandle;
+const osThreadAttr_t chassisTask_attributes = {
+  .name = "chassisTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -76,11 +83,13 @@ __weak void RTOS_Init(void) {}
 __weak void RTOS_Default_Task(const void *argument) { UNUSED(argument); }
 __weak void imuTask(const void *argument) { UNUSED(argument); }
 __weak void ledTask(const void *argument) { UNUSED(argument); }
+__weak void chassisTask(const void *argument) { UNUSED(argument); }
 /* USER CODE END FunctionPrototypes */
 
 void DefaultTaskStart(void *argument);
 void ledTaskStart(void *argument);
 void imuTaskStart(void *argument);
+void chassisTaskStart(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -119,6 +128,9 @@ void MX_FREERTOS_Init(void) {
 
   /* creation of imuTask */
   imuTaskHandle = osThreadNew(imuTaskStart, NULL, &imuTask_attributes);
+
+  /* creation of chassisTask */
+  chassisTaskHandle = osThreadNew(chassisTaskStart, NULL, &chassisTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -159,7 +171,7 @@ void DefaultTaskStart(void *argument)
 void ledTaskStart(void *argument)
 {
   /* USER CODE BEGIN ledTaskStart */
-//	ledTask(argument);
+	ledTask(argument);
   /* Infinite loop */
 
   for(;;)
@@ -179,13 +191,32 @@ void ledTaskStart(void *argument)
 void imuTaskStart(void *argument)
 {
   /* USER CODE BEGIN imuTaskStart */
-//	imuTask(argument);
+	imuTask(argument);
   /* Infinite loop */
   for(;;)
   {
     osDelay(1);
   }
   /* USER CODE END imuTaskStart */
+}
+
+/* USER CODE BEGIN Header_chassisTaskStart */
+/**
+* @brief Function implementing the chassisTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_chassisTaskStart */
+void chassisTaskStart(void *argument)
+{
+  /* USER CODE BEGIN chassisTaskStart */
+	chassisTask(argument);
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END chassisTaskStart */
 }
 
 /* Private application code --------------------------------------------------*/

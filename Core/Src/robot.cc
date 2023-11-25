@@ -32,29 +32,12 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
 
 	if (hspi->Instance == SPI1) {
-		if (imu.readingAcc) {
+		if (imu.readingAcc)
 			BMI088_ReadAccelerometerDMA_Complete(&imu);	/* post-processing accelerometer data*/
-
-			/* Filter accelerometer data */
-		//	RCFilter_Update(&lpfAcc[0], imu.acc_mps2[0]);
-		//	RCFilter_Update(&lpfAcc[1], imu.acc_mps2[1]);
-		//	RCFilter_Update(&lpfAcc[2], imu.acc_mps2[2]);
-
-//			MahonyAHRSupdateIMU(imu.INS_quat, imu.gyr_rps[0], imu.gyr_rps[1], imu.gyr_rps[2], imu.acc_mps2[0],
-//					   imu.acc_mps2[1], imu.acc_mps2[2]);
-		}
-		if (imu.readingGyr) {
+		if (imu.readingGyr)
 			BMI088_ReadGyroscopeDMA_Complete(&imu);	/* post-processing gyroscope data*/
-
-			/* Filter gyroscope data */
-		//	RCFilter_Update(&lpfGyr[0], imu.gyr_rps[0]);
-		//	RCFilter_Update(&lpfGyr[1], imu.gyr_rps[1]);
-		//	RCFilter_Update(&lpfGyr[2], imu.gyr_rps[2]);
-
-//			MahonyAHRSupdateIMU(imu.INS_quat, imu.gyr_rps[0], imu.gyr_rps[1], imu.gyr_rps[2], imu.acc_mps2[0],
-//								   imu.acc_mps2[1], imu.acc_mps2[2]);
-		}
 	}
+
 }
 
 
@@ -89,14 +72,37 @@ void imuTask(const void* args){
 
 		GetEulerAngle(imu.INS_quat, &imu.INS_euler[0], &imu.INS_euler[1], &imu.INS_euler[2]);
 
-//		 print("acc0: %.3f, acc1: %.3f, acc2: %.3f, gyr0: %.3f, gyr1: %.3f, gyr2: %.3f\r\n",
+//		print("acc0: %.3f, acc1: %.3f, acc2: %.3f, gyr0: %.3f, gyr1: %.3f, gyr2: %.3f\r\n",
 //		   imu.acc_mps2[0], imu.acc_mps2[1], imu.acc_mps2[2], imu.gyr_rps[0], imu.gyr_rps[1], imu.gyr_rps[2]);
 
 		print("yaw: %.3f, pitch: %.3f, roll: %.3f\r\n", imu.INS_euler[0] / PI * 180, imu.INS_euler[1] / PI * 180, imu.INS_euler[2] / PI * 180);
+
 //		print("yaw: %.3f, pitch: %.3f, roll: %.3f\r\n", imu.INS_euler[0], imu.INS_euler[1], imu.INS_euler[2]);
 
 		HAL_Delay(1);
 
+	}
+}
+
+void chassisTask(const void* args){
+	UNUSED(args);
+
+    while (true) {
+        motor_start.input(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13));
+        if (motor_start.negEdge())
+            break;
+    }
+
+    control::MotorCANBase* motors[] = {motor};
+    control::PIDController pid(20, 15, 30);
+
+	while (true) {
+        float diff = motor->GetOmegaDelta(TARGET_SPEED);
+        int16_t out = pid.ComputeConstrainedOutput(diff);
+        motor->SetOutput(out);
+        control::MotorCANBase::TransmitOutput(motors, 1);
+//        print("Diff: %f  Output: %d\r\n", diff, out);
+        osDelay(10);
 	}
 }
 
@@ -129,7 +135,7 @@ void ledTask(const void* args){
         	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
         }
 
-        print("Intensity: %d   Pin state: %d\r\n", intensity, pin_state);
+//        print("Intensity: %d   Pin state: %d\r\n", intensity, pin_state);
 
 		HAL_Delay(50);
 	}
@@ -139,24 +145,6 @@ void ledTask(const void* args){
 
 void RTOS_Default_Task(const void* args) {
 	UNUSED(args);
-
-    while (true) {
-        motor_start.input(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13));
-        if (motor_start.negEdge())
-            break;
-    }
-
-    control::MotorCANBase* motors[] = {motor};
-    control::PIDController pid(20, 15, 30);
-
-	while (true) {
-        float diff = motor->GetOmegaDelta(TARGET_SPEED);
-        int16_t out = pid.ComputeConstrainedOutput(diff);
-        motor->SetOutput(out);
-        control::MotorCANBase::TransmitOutput(motors, 1);
-        print("Diff: %f  Output: %d\r\n", diff, out);
-        osDelay(10);
-	}
 
 
 }
