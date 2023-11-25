@@ -18,12 +18,12 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "motor.h"
+#include "../Inc/motor.h"
 
 #include "arm_math.h"
-#include "bsp_error_handler.h"
-#include "bsp_os.h"
-#include "utils.h"
+#include "../../BSP/Inc/bsp_error_handler.h"
+#include "../../BSP/Inc/bsp_os.h"
+#include "../Inc/utils.h"
 
 using namespace bsp;
 

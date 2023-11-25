@@ -18,46 +18,44 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "bsp_os.h"
+#include "../Inc/bsp_print.h"
 
-#include "cmsis_os.h"
-#include "task.h"
+#include "../Inc/bsp_uart.h"
+#include "main.h"
+#include "../../Libraries/Inc/printf.h"  // third party tiny-printf implemnetations
 
-static TIM_HandleTypeDef* htim_os = nullptr;
+#define MAX_PRINT_LEN 256
 
-/**
- * @brief override FreeRTOS weak function to configure the timer used for generating run-time stats
- */
-extern "C" void configureTimerForRunTimeStats(void) {
-  if (!htim_os) return;
-  __HAL_TIM_SET_AUTORELOAD(htim_os, 0xffffffff);
-  __HAL_TIM_SET_COUNTER(htim_os, 0);
-  __HAL_TIM_ENABLE(htim_os);
+static bsp::UART* print_uart = NULL;
+static char print_buffer[MAX_PRINT_LEN];
+
+void print_use_uart(UART_HandleTypeDef* huart) {
+  if (print_uart) delete print_uart;
+
+  print_uart = new bsp::UART(huart);
+  print_uart->SetupTx(MAX_PRINT_LEN * 2);  // burst transfer size up to 2x max buffer size
 }
 
-/**
- * @brief triggered when a stack overflow is detected
- *
- * @param xTask       task handle
- * @param pcTaskName  task name
- */
-extern "C" void vApplicationStackOverflowHook(xTaskHandle xTask, signed char* pcTaskName) {
-  (void)xTask;
-  (void)pcTaskName;
+int32_t print(const char* format, ...) {
+#ifdef NDEBUG
+  UNUSED(format);
+  UNUSED(print_buffer);
+  return 0;
+#else   // == #ifdef DEBUG
+  va_list args;
+  int length;
 
-  while (true) {
-  }
+  va_start(args, format);
+  length = vsnprintf(print_buffer, MAX_PRINT_LEN, format, args);
+  va_end(args);
+
+  if (print_uart)
+    return print_uart->Write((uint8_t*)print_buffer, length);
+  else
+    return 0;
+#endif  // #ifdef NDEBUG
 }
 
-extern "C" unsigned long getRunTimeCounterValue(void) {
-  if (!htim_os) return 0;
-  return htim_os->Instance->CNT;
-}
+void set_cursor(int row, int col) { print("\033[%d;%dH", row, col); }
 
-namespace bsp {
-
-void SetHighresClockTimer(TIM_HandleTypeDef* htim) { htim_os = htim; }
-
-uint32_t GetHighresTickMicroSec(void) { return getRunTimeCounterValue(); }
-
-} /* namespace bsp */
+void clear_screen(void) { print("\033[2J"); }

@@ -18,9 +18,9 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "bsp_can.h"
+#include "../Inc/bsp_can.h"
 
-#include "bsp_error_handler.h"
+#include "../Inc/bsp_error_handler.h"
 #include "cmsis_os.h"
 
 namespace bsp {

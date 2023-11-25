@@ -1,13 +1,12 @@
 #include "cmsis_os.h"
 #include "main.h"
 #include "tim.h"
-#include "bsp_print.h"
-#include "BMI088.h"
 #include "spi.h"
-#include "MahonyAHRS.h"
-#include "cmsis_os.h"
-#include "controller.h"
-#include "motor.h"
+#include "../BSP/Inc/bsp_print.h"
+#include "../Libraries/Inc/BMI088.h"
+#include "../Libraries/Inc/MahonyAHRS.h"
+#include "../Libraries/Inc/controller.h"
+#include "../Libraries/Inc/motor.h"
 
 #define TARGET_SPEED 30
 

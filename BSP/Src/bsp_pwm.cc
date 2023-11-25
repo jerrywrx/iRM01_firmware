@@ -18,56 +18,51 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "utils.h"
+#include "../Inc/bsp_pwm.h"
 
-BoolEdgeDetector::BoolEdgeDetector(bool initial) { prev_ = initial; }
+#include "../Inc/bsp_error_handler.h"
+#include "cmsis_os.h"
 
-void BoolEdgeDetector::input(bool signal) {
-  posEdge_ = false;
-  negEdge_ = false;
-  if (!prev_ && signal)
-    posEdge_ = true;
-  else if (prev_ && !signal)
-    negEdge_ = true;
-  prev_ = signal;
+namespace bsp {
+
+PWM::PWM(TIM_HandleTypeDef* htim, uint8_t channel, uint32_t clock_freq, uint32_t output_freq,
+         uint32_t pulse_width)
+    : htim_(htim), clock_freq_(clock_freq), output_freq_(output_freq), pulse_width_(pulse_width) {
+  switch (channel) {
+    case 1:
+      channel_ = TIM_CHANNEL_1;
+      break;
+    case 2:
+      channel_ = TIM_CHANNEL_2;
+      break;
+    case 3:
+      channel_ = TIM_CHANNEL_3;
+      break;
+    case 4:
+      channel_ = TIM_CHANNEL_4;
+      break;
+    default:
+      bsp_error_handler(__FUNCTION__, __LINE__, "pwm channel not valid");
+  }
+  SetFrequency(output_freq);
+  SetPulseWidth(pulse_width);
 }
 
-bool BoolEdgeDetector::edge() { return posEdge_ || negEdge_; }
+void PWM::Start() { HAL_TIM_PWM_Start(htim_, channel_); }
 
-bool BoolEdgeDetector::posEdge() { return posEdge_; }
+void PWM::Stop() { HAL_TIM_PWM_Stop(htim_, channel_); }
 
-bool BoolEdgeDetector::negEdge() { return negEdge_; }
-
-FloatEdgeDetector::FloatEdgeDetector(float initial, float threshold) {
-  prev_ = initial;
-  threshold_ = threshold;
+void PWM::SetFrequency(uint32_t output_freq) {
+  this->output_freq_ = output_freq;
+  uint32_t auto_reload = output_freq > 0 ? clock_freq_ / output_freq_ - 1 : 0;
+  __HAL_TIM_SET_AUTORELOAD(htim_, auto_reload);
+  __HAL_TIM_SET_COUNTER(htim_, 0);
 }
 
-void FloatEdgeDetector::input(float signal) {
-  posEdge_ = false;
-  negEdge_ = false;
-  float diff = signal - prev_;
-  if (diff > threshold_)
-    posEdge_ = true;
-  else if (diff < -threshold_)
-    negEdge_ = true;
-  prev_ = signal;
+void PWM::SetPulseWidth(uint32_t pulse_width) {
+  this->pulse_width_ = pulse_width;
+  uint32_t compare = pulse_width > 0 ? clock_freq_ * pulse_width_ / 1000000 - 1 : 0;
+  __HAL_TIM_SET_COMPARE(htim_, channel_, compare);
 }
 
-bool FloatEdgeDetector::edge() { return posEdge_ || negEdge_; }
-
-bool FloatEdgeDetector::posEdge() { return posEdge_; }
-
-bool FloatEdgeDetector::negEdge() { return negEdge_; }
-
-uint16_t float_to_uint(float x, float x_min, float x_max, int bits) {
-  float span = x_max - x_min;
-  float offset = x_min;
-  return (uint16_t) ((x-offset) * ((float)((1<<bits)-1))/span);
-}
-
-float uint_to_float(int x_int, float x_min, float x_max, int bits) {
-  float span = x_max - x_min;
-  float offset = x_min;
-  return ((float)x_int) * span / ((float)((1 << bits) - 1)) + offset;
-}
+} /* namespace bsp */

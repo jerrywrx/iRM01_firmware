@@ -18,10 +18,10 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "controller.h"
+#include "../Inc/controller.h"
 
-#include "motor.h"
-#include "utils.h"
+#include "../Inc/motor.h"
+#include "../Inc/utils.h"
 
 namespace control {
 

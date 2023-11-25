@@ -18,12 +18,12 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "bsp_uart.h"
+#include "../Inc/bsp_uart.h"
 
 #include <cstring>
 #include <map>
 
-#include "bsp_error_handler.h"
+#include "../Inc/bsp_error_handler.h"
 #include "cmsis_os.h"
 #include "task.h"
 #include "main.h"

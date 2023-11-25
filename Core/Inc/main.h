@@ -31,7 +31,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "BMI088.h"
+#include "../../Libraries/Inc/BMI088.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

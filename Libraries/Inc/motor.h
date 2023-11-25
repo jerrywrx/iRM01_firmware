@@ -20,8 +20,8 @@
 
 #pragma once
 
-#include "bsp_can.h"
-#include "bsp_pwm.h"
+#include "../../BSP/Inc/bsp_can.h"
+#include "../../BSP/Inc/bsp_pwm.h"
 #include "controller.h"
 #include "utils.h"
 

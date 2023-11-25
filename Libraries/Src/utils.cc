@@ -18,44 +18,56 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "bsp_print.h"
+#include "../Inc/utils.h"
 
-#include "bsp_uart.h"
-#include "main.h"
-#include "printf.h"  // third party tiny-printf implemnetations
+BoolEdgeDetector::BoolEdgeDetector(bool initial) { prev_ = initial; }
 
-#define MAX_PRINT_LEN 256
-
-static bsp::UART* print_uart = NULL;
-static char print_buffer[MAX_PRINT_LEN];
-
-void print_use_uart(UART_HandleTypeDef* huart) {
-  if (print_uart) delete print_uart;
-
-  print_uart = new bsp::UART(huart);
-  print_uart->SetupTx(MAX_PRINT_LEN * 2);  // burst transfer size up to 2x max buffer size
+void BoolEdgeDetector::input(bool signal) {
+  posEdge_ = false;
+  negEdge_ = false;
+  if (!prev_ && signal)
+    posEdge_ = true;
+  else if (prev_ && !signal)
+    negEdge_ = true;
+  prev_ = signal;
 }
 
-int32_t print(const char* format, ...) {
-#ifdef NDEBUG
-  UNUSED(format);
-  UNUSED(print_buffer);
-  return 0;
-#else   // == #ifdef DEBUG
-  va_list args;
-  int length;
+bool BoolEdgeDetector::edge() { return posEdge_ || negEdge_; }
 
-  va_start(args, format);
-  length = vsnprintf(print_buffer, MAX_PRINT_LEN, format, args);
-  va_end(args);
+bool BoolEdgeDetector::posEdge() { return posEdge_; }
 
-  if (print_uart)
-    return print_uart->Write((uint8_t*)print_buffer, length);
-  else
-    return 0;
-#endif  // #ifdef NDEBUG
+bool BoolEdgeDetector::negEdge() { return negEdge_; }
+
+FloatEdgeDetector::FloatEdgeDetector(float initial, float threshold) {
+  prev_ = initial;
+  threshold_ = threshold;
 }
 
-void set_cursor(int row, int col) { print("\033[%d;%dH", row, col); }
+void FloatEdgeDetector::input(float signal) {
+  posEdge_ = false;
+  negEdge_ = false;
+  float diff = signal - prev_;
+  if (diff > threshold_)
+    posEdge_ = true;
+  else if (diff < -threshold_)
+    negEdge_ = true;
+  prev_ = signal;
+}
 
-void clear_screen(void) { print("\033[2J"); }
+bool FloatEdgeDetector::edge() { return posEdge_ || negEdge_; }
+
+bool FloatEdgeDetector::posEdge() { return posEdge_; }
+
+bool FloatEdgeDetector::negEdge() { return negEdge_; }
+
+uint16_t float_to_uint(float x, float x_min, float x_max, int bits) {
+  float span = x_max - x_min;
+  float offset = x_min;
+  return (uint16_t) ((x-offset) * ((float)((1<<bits)-1))/span);
+}
+
+float uint_to_float(int x_int, float x_min, float x_max, int bits) {
+  float span = x_max - x_min;
+  float offset = x_min;
+  return ((float)x_int) * span / ((float)((1 << bits) - 1)) + offset;
+}

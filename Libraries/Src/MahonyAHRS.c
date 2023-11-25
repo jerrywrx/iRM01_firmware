@@ -14,7 +14,7 @@
 //---------------------------------------------------------------------------------------------------
 // Header files
 
-#include "MahonyAHRS.h"
+#include "../Inc/MahonyAHRS.h"
 #include <math.h>
 #include "main.h"
 
