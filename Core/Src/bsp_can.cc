@@ -66,7 +66,7 @@ namespace bsp {
 
     CAN::CAN(CAN_HandleTypeDef* hcan, bool is_master): hcan_(hcan){
         RM_ASSERT_FALSE(HandleExists(hcan), "Repeated CAN initialization");
-//        ConfigureFilter(is_master);
+        ConfigureFilter(is_master);
         // activate rx interrupt
         RM_ASSERT_HAL_OK(HAL_CAN_RegisterCallback(hcan, HAL_CAN_RX_FIFO0_MSG_PENDING_CB_ID,
                                                   RxFIFO0MessagePendingCallback),
@@ -79,14 +79,12 @@ namespace bsp {
         ptr_map[hcan] = this;
     }
 
-    int CAN::RegisterRxCallback(uint32_t std_id, can_rx_callback_t callback, void* args) {
-        // int callback_id = std_id - start_id_;
-
+    int CAN::RegisterRxCallback(uint32_t rx_id, can_rx_callback_t callback, void* args) {
         if (callback_count_ >= MAX_CAN_DEVICES) return -1;
 
         rx_args_[callback_count_] = args;
         rx_callbacks_[callback_count_] = callback;
-        id_to_index_[std_id] = callback_count_;
+        id_to_index_[rx_id] = callback_count_;  // map rx_id to callback index
         callback_count_++;
 
         return 0;
@@ -119,13 +117,18 @@ namespace bsp {
     void CAN::RxCallback() {
         CAN_RxHeaderTypeDef header;
         uint8_t data[MAX_CAN_DATA_SIZE];
+
+        // receive CAN message
         HAL_CAN_GetRxMessage(hcan_, CAN_RX_FIFO0, &header, data);
-        uint16_t callback_id = header.StdId;
-        const auto it = id_to_index_.find(callback_id);
-        if (it == id_to_index_.end())
+
+        uint16_t rx_id = header.StdId;
+        // check if the rx_id is registered
+        const auto it = id_to_index_.find(rx_id);
+        if (it == id_to_index_.end())   // no registered callback for this id
             return;
-        callback_id = it->second;
-        // find corresponding callback
+        uint8_t callback_id = it->second;   // get callback index
+
+        // if the callback is registered, call it
         if (rx_callbacks_[callback_id])
             rx_callbacks_[callback_id](data, rx_args_[callback_id]);
     }

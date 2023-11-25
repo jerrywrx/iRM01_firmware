@@ -9,10 +9,11 @@
 #include "controller.h"
 #include "motor.h"
 
-#define TARGET_SPEED 5
+#define TARGET_SPEED 30
 
 bsp::CAN* can = nullptr;
 control::MotorCANBase* motor = nullptr;
+static BoolEdgeDetector motor_start(false);
 
 BMI088 imu;
 
@@ -138,6 +139,12 @@ void ledTask(const void* args){
 
 void RTOS_Default_Task(const void* args) {
 	UNUSED(args);
+
+    while (true) {
+        motor_start.input(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13));
+        if (motor_start.negEdge())
+            break;
+    }
 
     control::MotorCANBase* motors[] = {motor};
     control::PIDController pid(20, 15, 30);

@@ -56,13 +56,13 @@ class CAN {
     /**
      * @brief register callback function for a specific ID on this CAN line
      *
-     * @param std_id    rx id
+     * @param rx_id    rx id
      * @param callback  callback function
      * @param args      argument passed into the callback function
      *
-     * @return return 0 if success, -1 if invalid std_id
+     * @return return 0 if success, -1 if invalid rx_id
      */
-    int RegisterRxCallback(uint32_t std_id, can_rx_callback_t callback, void* args = NULL);
+    int RegisterRxCallback(uint32_t rx_id, can_rx_callback_t callback, void* args = NULL);
 
     /**
      * @brief transmit can messages
@@ -90,7 +90,7 @@ class CAN {
     can_rx_callback_t rx_callbacks_[MAX_CAN_DEVICES] = {0};
     void* rx_args_[MAX_CAN_DEVICES] = {NULL};
 
-    std::map<uint16_t, uint8_t> id_to_index_;
+    std::map<uint16_t, uint8_t> id_to_index_;   // map rx_id to callback index
     uint8_t callback_count_ = 0;
 
     static std::map<CAN_HandleTypeDef*, CAN*> ptr_map;
