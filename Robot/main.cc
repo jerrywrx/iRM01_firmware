@@ -14,7 +14,8 @@
 static BoolEdgeDetector button_init(false);
 
 bsp::CAN* can = nullptr;
-//control::MotorCANBase* motor = nullptr;
+control::MotorCANBase* motor = nullptr;
+control::MotorCANBase* motor2 = nullptr;
 control::Motor4310* leg_motor = nullptr;
 remote::DBUS* dbus;
 BMI088 imu;
@@ -52,7 +53,8 @@ void RTOS_Init() {
 	BMI088_Init(&imu, &hspi1, GPIOB, SPI1_CS_ACC_Pin, GPIOA, SPI1_CS_GYRO_Pin);
 
 	can = new bsp::CAN(&hcan, true);
-//	motor = new control::Motor3508(can, 0x201);
+	motor = new control::Motor3508(can, 0x201);
+    motor2 = new control::Motor3508(can, 0x202);
     leg_motor = new control::Motor4310(can, 0x02, 0x01, control::MIT);
     dbus = new remote::DBUS(&huart2);
 }
@@ -117,35 +119,32 @@ void imuTask(const void* args){
 	}
 }
 
-bool button_pressed = false;
 void chassisTask(const void* args){
 	UNUSED(args);
 
-    while (true) {
-        button_init.input(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13));
-        if (button_init.negEdge()) {
-            button_pressed = true;
-            break;
-        }
-    }
-
     while (dbus->swr != remote::DOWN) {HAL_Delay(10);}
-
-//    control::MotorCANBase* motors[] = {motor};
-//    control::PIDController pid(20, 15, 30);
+//
+    control::MotorCANBase* motors[] = {motor, motor2};
+    control::PIDController pid(20, 15, 30);
+    control::PIDController pid2(20, 15, 30);
     control::Motor4310* leg_motors[] = {leg_motor};
 
     leg_motor->SetZeroPos();
     leg_motor->MotorEnable();
 
 	while (true) {
-//        float diff = motor->GetOmegaDelta(TARGET_SPEED);
-//        int16_t out = pid.ComputeConstrainedOutput(diff);
-//        motor->SetOutput(out);
-//        control::MotorCANBase::TransmitOutput(motors, 1);
+        float vel = dbus->ch1 / 660.0 * 30.0;
+        vel = clip<float>(vel, -30, 30);
 
-//        uint16_t vel = dbus->ch1 / 660 * 30;
-        leg_motor->SetOutput(0, 1, 0, 0.5, 0);
+        float diff = motor->GetOmegaDelta(vel);
+        int16_t out = pid.ComputeConstrainedOutput(diff);
+        motor->SetOutput(out);
+        float diff2 = motor2->GetOmegaDelta(vel);
+        int16_t out2 = pid2.ComputeConstrainedOutput(diff2);
+        motor2->SetOutput(out2);
+        control::MotorCANBase::TransmitOutput(motors, 2);
+
+        leg_motor->SetOutput(0, vel, 0, 0.5, 0);
         control::Motor4310::TransmitOutput(leg_motors, 1);
 
         osDelay(10);
@@ -196,10 +195,8 @@ void RTOS_Default_Task(const void* args) {
         print("# %.2f s, IMU %s\r\n", HAL_GetTick() / 1000.0,
               init ? "\033[1;42mReady\033[0m" : "\033[1;41mNot Ready\033[0m");
 
-        print("button_pressed: %d\r\n", button_pressed);
-
-//        print("Euler Angles: %.2f, %.2f, %.2f\r\n", imu.INS_euler[0] / PI * 180,
-//              imu.INS_euler[1] / PI * 180, imu.INS_euler[2] / PI * 180);
+        print("Euler Angles: %.2f, %.2f, %.2f\r\n", imu.INS_euler[0] / PI * 180,
+              imu.INS_euler[1] / PI * 180, imu.INS_euler[2] / PI * 180);
 
 //        print("acc0: %.3f, acc1: %.3f, acc2: %.3f, gyr0: %.3f, gyr1: %.3f, gyr2: %.3f\r\n",
 //            imu.acc_mps2[0], imu.acc_mps2[1], imu.acc_mps2[2], imu.gyr_rps[0], imu.gyr_rps[1], imu.gyr_rps[2]);
