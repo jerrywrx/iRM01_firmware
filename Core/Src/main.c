@@ -140,6 +140,7 @@ int main(void)
   MX_SPI1_Init();
   MX_USART1_UART_Init();
   MX_CAN_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
   /* USER CODE END 2 */

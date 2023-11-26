@@ -7,6 +7,7 @@
 #include "../Libraries/Inc/MahonyAHRS.h"
 #include "../Libraries/Inc/controller.h"
 #include "../Libraries/Inc/motor.h"
+#include "../Libraries/Inc/dbus.h"
 
 #define TARGET_SPEED 30
 
@@ -15,6 +16,7 @@ static BoolEdgeDetector init(false);
 bsp::CAN* can = nullptr;
 control::MotorCANBase* motor = nullptr;
 control::Motor4310* leg_motor = nullptr;
+remote::DBUS* dbus;
 BMI088 imu;
 
 /* callback triggered by an external interrupt on a GPIO pin*/
@@ -50,6 +52,7 @@ void RTOS_Init() {
 	can = new bsp::CAN(&hcan, true);
 	motor = new control::Motor3508(can, 0x201);
     leg_motor = new control::Motor4310(can, 0x02, 0x01, control::MIT);
+    dbus = new remote::DBUS(&huart2);
 }
 
 
@@ -189,8 +192,11 @@ void RTOS_Default_Task(const void* args) {
     	clear_screen();
         set_cursor(0, 0);
 
-    	print("motor_start: %d\r\n", motor_start);
-        print("yaw: %.3f, pitch: %.3f, roll: %.3f\r\n", imu.INS_euler[0] / PI * 180, imu.INS_euler[1] / PI * 180, imu.INS_euler[2] / PI * 180);
+        print("CH0: %-4d CH1: %-4d CH2: %-4d CH3: %-4d ", dbus->ch0, dbus->ch1, dbus->ch2, dbus->ch3);
+//        print("SWL: %d SWR: %d DIAL: %d @ %d ms\r\n", dbus->swl, dbus->swr, dbus->wheel, dbus->timestamp);
+
+//    	print("motor_start: %d\r\n", motor_start);
+//        print("yaw: %.3f, pitch: %.3f, roll: %.3f\r\n", imu.INS_euler[0] / PI * 180, imu.INS_euler[1] / PI * 180, imu.INS_euler[2] / PI * 180);
         HAL_Delay(10);
     }
 
