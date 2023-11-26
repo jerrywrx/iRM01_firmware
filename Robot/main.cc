@@ -8,16 +8,16 @@
 #include "../Libraries/Inc/controller.h"
 #include "../Libraries/Inc/motor.h"
 #include "../Libraries/Inc/dbus.h"
+#include "balance.h"
 
-#define TARGET_SPEED 30
-
-static BoolEdgeDetector button_init(false);
-
-bsp::CAN* can = nullptr;
-control::MotorCANBase* motor = nullptr;
-control::MotorCANBase* motor2 = nullptr;
-control::Motor4310* leg_motor = nullptr;
-remote::DBUS* dbus;
+static bsp::CAN* can1 = nullptr;
+static control::MotorCANBase* left_wheel_motor = nullptr;
+static control::MotorCANBase* right_wheel_motor = nullptr;
+static control::Motor4310* left_front_leg_motor = nullptr;
+static control::Motor4310* left_back_leg_motor = nullptr;
+static control::Motor4310* right_front_leg_motor = nullptr;
+static control::Motor4310* right_back_leg_motor = nullptr;
+static remote::DBUS* dbus = nullptr;
 BMI088 imu;
 
 static bool init = false;
@@ -47,16 +47,25 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
 
 
 void RTOS_Init() {
-	print_use_uart(&huart1);
-
 	/* Initialise inertial measurement unit */
 	BMI088_Init(&imu, &hspi1, GPIOB, SPI1_CS_ACC_Pin, GPIOA, SPI1_CS_GYRO_Pin);
 
-	can = new bsp::CAN(&hcan, true);
-	motor = new control::Motor3508(can, 0x201);
-    motor2 = new control::Motor3508(can, 0x202);
-    leg_motor = new control::Motor4310(can, 0x02, 0x01, control::MIT);
+    //dbus and print initialization
+    print_use_uart(&huart1);
     dbus = new remote::DBUS(&huart2);
+
+    // can initialization
+    can1 = new bsp::CAN(&hcan, true);
+
+    // wheel motor initialization
+    left_wheel_motor = new control::Motor3508(can1, 0x201);
+    right_wheel_motor = new control::Motor3508(can1, 0x202);
+
+    // leg motor initialization
+    left_front_leg_motor = new control::Motor4310(can1, 0x02, 0x01, control::MIT);
+    left_back_leg_motor = new control::Motor4310(can1, 0x04, 0x03, control::MIT);
+    right_front_leg_motor = new control::Motor4310(can1, 0x06, 0x05, control::MIT);
+    right_back_leg_motor = new control::Motor4310(can1, 0x08, 0x07, control::MIT);
 }
 
 
@@ -119,36 +128,196 @@ void imuTask(const void* args){
 	}
 }
 
+control::ConstrainedPID* balance_controller = new control::ConstrainedPID(500.0, 0.0, 100.0, 14000.0, 14000.0);
+control::ConstrainedPID* velocity_controller = new control::ConstrainedPID(10000.0, 0.0, 2000.0, 14000.0, 14000.0);
+control::ConstrainedPID* rotation_controller = new control::ConstrainedPID(3000.0, 0.0, 500.0, 14000.0, 14000.0);
+control::ConstrainedPID* left_wheel_vel_pid = new control::ConstrainedPID(2000, 10, 500, 14000.0, 14000.0);
+control::ConstrainedPID* right_wheel_vel_pid = new control::ConstrainedPID(2000, 10, 500, 14000.0, 14000.0);
+float balance_output = 0.0;
+float velocity_output = 0.0;
+float rotation_output = 0.0;
+
 void chassisTask(const void* args){
-	UNUSED(args);
+    UNUSED(args);
 
-    while (dbus->swr != remote::DOWN) {HAL_Delay(10);}
-//
-    control::MotorCANBase* motors[] = {motor, motor2};
-    control::PIDController pid(20, 15, 30);
-    control::PIDController pid2(20, 15, 30);
-    control::Motor4310* leg_motors[] = {leg_motor};
+    // start switch
+    while(true){
+        if (dbus->swr == remote::DOWN) {
+            break;
+        }
+        osDelay(100);
+    }
 
-    leg_motor->SetZeroPos();
-    leg_motor->MotorEnable();
+    control::MotorCANBase* wheel_motors[] = {left_wheel_motor, right_wheel_motor};
+//    control::Motor4310* leg_motor1[] = {left_front_leg_motor, left_back_leg_motor, right_front_leg_motor, right_back_leg_motor};
+    control::Motor4310* leg_motor1[] = {left_front_leg_motor};
+    control::Motor4310* leg_motor2[] = {left_back_leg_motor};
+    control::Motor4310* leg_motor3[] = {right_front_leg_motor};
+    control::Motor4310* leg_motor4[] = {right_back_leg_motor};
 
-	while (true) {
-        float vel = dbus->ch1 / 660.0 * 30.0;
-        vel = clip<float>(vel, -30, 30);
+    osDelay(10);
+    print("Calibration done\r\n");
+    osDelay(1000);
+    // leg motor activation
+    //  left_front_leg_motor->SetZeroPos();
+    left_front_leg_motor->MotorEnable();
+    osDelay(100);
+    //  left_back_leg_motor->SetZeroPos();
+    left_back_leg_motor->MotorEnable();
+    osDelay(100);
+    //  right_front_leg_motor->SetZeroPos();
+    right_front_leg_motor->MotorEnable();
+    osDelay(100);
+    //  right_back_leg_motor->SetZeroPos();
+    right_back_leg_motor->MotorEnable();
 
-        float diff = motor->GetOmegaDelta(vel);
-        int16_t out = pid.ComputeConstrainedOutput(diff);
-        motor->SetOutput(out);
-        float diff2 = motor2->GetOmegaDelta(vel);
-        int16_t out2 = pid2.ComputeConstrainedOutput(diff2);
-        motor2->SetOutput(out2);
-        control::MotorCANBase::TransmitOutput(motors, 2);
+    while (dbus->swl != remote::DOWN) {osDelay(100);}
 
-        leg_motor->SetOutput(0, vel, 0, 0.5, 0);
-        control::Motor4310::TransmitOutput(leg_motors, 1);
+    left_front_leg_motor->SetRelativeTarget(0);
+    left_back_leg_motor->SetRelativeTarget(0);
+    right_front_leg_motor->SetRelativeTarget(0);
+    right_back_leg_motor->SetRelativeTarget(0);
 
+    for (int j = 0; j < 300; j++){
+        left_front_leg_motor->SetRelativeTarget(left_front_leg_motor->GetRelativeTarget() + demo_height / 300);  // increase position gradually
+        left_front_leg_motor->SetOutput(left_front_leg_motor->GetRelativeTarget(), 1, 115, 0.5, 0);
+        left_back_leg_motor->SetRelativeTarget(left_back_leg_motor->GetRelativeTarget() + demo_height / 300);
+        left_back_leg_motor->SetOutput(-left_back_leg_motor->GetRelativeTarget(), 1, 115, 0.5, 0);
+        right_front_leg_motor->SetRelativeTarget(right_front_leg_motor->GetRelativeTarget() + demo_height / 300);
+        right_front_leg_motor->SetOutput(-right_front_leg_motor->GetRelativeTarget(), 1, 115, 0.5, 0);
+        right_back_leg_motor->SetRelativeTarget(right_back_leg_motor->GetRelativeTarget() + demo_height / 300);
+        right_back_leg_motor->SetOutput(right_back_leg_motor->GetRelativeTarget(), 1, 115, 0.5, 0);
+
+        control::Motor4310::TransmitOutput(leg_motor1, 1);
+        osDelay(1);
+        control::Motor4310::TransmitOutput(leg_motor2, 1);
+        osDelay(1);
+        control::Motor4310::TransmitOutput(leg_motor3, 1);
+        osDelay(1);
+        control::Motor4310::TransmitOutput(leg_motor4, 1);
+        osDelay(1);
+    }
+    float pos = demo_height;
+    float min_pos = -PI/4;
+    float max_pos = PI/4;
+
+    float balance_angle = 0; // measured by IMU
+    float left_output = 0.0;
+    float right_output = 0.0;
+    float balance_difference = 0.0;
+    float velocity_difference = 0.0;
+    float rotation_difference = 0.0;
+    current_raw_yaw = imu.INS_euler[0];
+    last_raw_yaw = imu.INS_euler[0];
+    rotation_angle = current_raw_yaw;
+
+    while (true) {
+        // position control
+        balance_difference =  -(balance_angle - imu.INS_euler[1] / PI * 180);
+        // velocity control
+        velocity_difference = (dbus->ch1/660.0)
+                              - (-left_wheel_motor->GetOmega() + right_wheel_motor->GetOmega()) * rpm_rads * wheel_radius * 0.5;
+        // rotation control
+        rotation_angle += -(dbus->ch2/660.0) * 0.3;
+        last_raw_yaw = current_raw_yaw;
+        current_raw_yaw = imu.INS_euler[0];
+        current_yaw = turn_count * 2 * PI + current_raw_yaw;
+        if (fabs(current_raw_yaw - last_raw_yaw) > 1.9f * PI)
+        {
+            if ((current_raw_yaw - last_raw_yaw) < 0)
+                turn_count++;
+            else
+                turn_count--;
+        }
+
+        rotation_difference = rotation_angle - current_yaw;
+
+        balance_output = -balance_controller->ComputeOutput(balance_difference);
+        velocity_output = velocity_controller->ComputeOutput(velocity_difference);
+        rotation_output = rotation_controller->ComputeOutput(rotation_difference);
+        if (dbus->swr == remote::DOWN || imu.INS_euler[1] / PI * 180 < balance_angle - 75 || imu.INS_euler[1] / PI * 180 > balance_angle + 75
+            || left_wheel_motor->GetCurr() > 16384 || right_wheel_motor->GetCurr() > 16384) {
+            left_output = 0;
+            right_output = 0;
+        } else {
+            left_output = balance_output + velocity_output + rotation_output;
+            right_output = balance_output + velocity_output - rotation_output;
+
+            left_output = left_wheel_vel_pid->ComputeOutput(left_output * magic_rpm - left_wheel_motor->GetOmega());
+            right_output = right_wheel_vel_pid->ComputeOutput(right_output * magic_rpm + right_wheel_motor->GetOmega());
+
+            left_output = clip<float>(left_output, -14000, 14000);
+            right_output = clip<float>(right_output, -14000, 14000);
+        }
+        left_wheel_motor->SetOutput((int16_t)left_output);
+        right_wheel_motor->SetOutput(-(int16_t)right_output);
+
+        if (dbus->swl == remote::MID) {
+            float vel;
+            vel = clip<float>(dbus->ch3 / 660.0 * 15.0, -15, 15);
+            pos += vel / 200;
+            pos = clip<float>(pos, min_pos, max_pos);   // clipping position within a range
+
+            left_front_leg_motor->SetOutput(pos, vel, 30, 0.5, 0);
+            left_back_leg_motor->SetOutput(-pos, vel, 30, 0.5, 0);
+            right_front_leg_motor->SetOutput(-pos, vel, 30, 0.5, 0);
+            right_back_leg_motor->SetOutput(pos, vel, 30, 0.5, 0);
+        } else if (dbus->swl == remote::UP && jump_flag == true) {
+            jump_flag = false;
+            left_front_leg_motor->SetOutput(jump_height, 15, 30, 3, 0);
+            left_back_leg_motor->SetOutput(-jump_height, -15, 30, 3, 0);
+            right_front_leg_motor->SetOutput(-jump_height, -15, 30, 3, 0);
+            right_back_leg_motor->SetOutput(jump_height, 15, 30, 3, 0);
+//            control::Motor4310::TransmitOutput(leg_motors, 4);
+            control::Motor4310::TransmitOutput(leg_motor1, 1);
+            osDelay(1);
+            control::Motor4310::TransmitOutput(leg_motor2, 1);
+            osDelay(1);
+            control::Motor4310::TransmitOutput(leg_motor3, 1);
+            osDelay(1);
+            control::Motor4310::TransmitOutput(leg_motor4, 1);
+            osDelay(1);
+            osDelay(180);
+            left_front_leg_motor->SetOutput(pos, 15, 30, 3, 0);
+            left_back_leg_motor->SetOutput(-pos, -15, 30, 3, 0);
+            right_front_leg_motor->SetOutput(-pos, -15, 30, 3, 0);
+            right_back_leg_motor->SetOutput(pos, 15, 30, 3, 0);
+//            control::Motor4310::TransmitOutput(leg_motors, 4);
+            control::Motor4310::TransmitOutput(leg_motor1, 1);
+            osDelay(1);
+            control::Motor4310::TransmitOutput(leg_motor2, 1);
+            osDelay(1);
+            control::Motor4310::TransmitOutput(leg_motor3, 1);
+            osDelay(1);
+            control::Motor4310::TransmitOutput(leg_motor4, 1);
+            osDelay(1);
+            osDelay(5);
+        }
+
+        if (dbus->swr == remote::UP) {
+            left_wheel_motor->SetOutput(0);
+            right_wheel_motor->SetOutput(0);
+            left_front_leg_motor->SetOutput(0.0, 0.0, 0.0, 0.0, 0);
+            left_back_leg_motor->SetOutput(0.0, 0.0, 0.0, 0.0, 0);
+            right_front_leg_motor->SetOutput(0.0, 0.0, 0.0, 0.0, 0);
+            right_back_leg_motor->SetOutput(0.0, 0.0, 0.0, 0.0, 0);
+        }
+
+        control::MotorCANBase::TransmitOutput(wheel_motors, 2);
+        if (dbus->swl != remote::UP) {
+            jump_flag = true;
+//            control::Motor4310::TransmitOutput(leg_motors, 4);
+            control::Motor4310::TransmitOutput(leg_motor1, 1);
+            osDelay(1);
+            control::Motor4310::TransmitOutput(leg_motor2, 1);
+            osDelay(1);
+            control::Motor4310::TransmitOutput(leg_motor3, 1);
+            osDelay(1);
+            control::Motor4310::TransmitOutput(leg_motor4, 1);
+            osDelay(1);
+        }
         osDelay(10);
-	}
+    }
 }
 
 void ledTask(const void* args){
