@@ -81,16 +81,13 @@ void imuTask(const void* args){
 //    float zeroDriftSum[3] = {0.0f, 0.0f, 0.0f};
 //    float zeroDrift[3] = {0.0f, 0.0f, 0.0f};
 
-//    while (true) {
-//		init.input(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13));
-//		if (init.negEdge()){
-//			calibrated = true;
-//			break;
-//		}
-//	}
-
-    while (dbus->swr != remote::DOWN) {HAL_Delay(10);}
-    init = true;
+    while (true) {
+		button_init.input(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13));
+		if (button_init.negEdge()){
+            init = true;
+			break;
+		}
+	}
 
 	while (true) {
 //        if (calibrated) {
