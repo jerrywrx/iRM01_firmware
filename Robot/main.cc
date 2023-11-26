@@ -21,6 +21,7 @@ static remote::DBUS* dbus = nullptr;
 BMI088 imu;
 
 static bool init = false;
+static BoolEdgeDetector button_init(false);
 
 /* callback triggered by an external interrupt on a GPIO pin*/
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
@@ -85,45 +86,24 @@ void imuTask(const void* args){
 	imu.INS_euler[1] = 0.0f;
 	imu.INS_euler[2] = 0.0f;
 
-//    uint16_t count = 0;
-//
-//    float zeroDriftSum[3] = {0.0f, 0.0f, 0.0f};
-//    float zeroDrift[3] = {0.0f, 0.0f, 0.0f};
-
 //    while (true) {
-//		init.input(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13));
-//		if (init.negEdge()){
-//			calibrated = true;
+//        button_init.input(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13));
+//		if (button_init.negEdge()){
+//			init = true;
 //			break;
 //		}
 //	}
 
-    while (dbus->swr != remote::DOWN) {HAL_Delay(10);}
+    while (dbus->swr != remote::DOWN) {osDelay(10);}
     init = true;
 
 	while (true) {
-//        if (calibrated) {
-//            if (++count < zeroDriftTry) {
-//                for (int i = 0; i < 3; i++) {
-//                    zeroDriftSum[i] += imu.gyr_rps[i];
-//                }
-//                continue;
-//            } else if (count == zeroDriftTry) {
-//                for (int i = 0; i < 3; ++i) {
-//                    zeroDrift[i] = zeroDriftSum[i] / (float)zeroDriftTry;
-//                }
-//                continue;
-//            }
-//            for (int i = 0; i < 3; ++i) {
-//                imu.gyr_rps[i] -= zeroDrift[i];
-//            }
-
             MahonyAHRSupdateIMU(imu.INS_quat, imu.gyr_rps[0], imu.gyr_rps[1], imu.gyr_rps[2], imu.acc_mps2[0],
                imu.acc_mps2[1], imu.acc_mps2[2]);
 
             GetEulerAngle(imu.INS_quat, &imu.INS_euler[0], &imu.INS_euler[1], &imu.INS_euler[2]);
 
-            HAL_Delay(1);
+            osDelay(1);
 //        }
 	}
 }
@@ -159,16 +139,16 @@ void chassisTask(const void* args){
     print("Calibration done\r\n");
     osDelay(1000);
     // leg motor activation
-    //  left_front_leg_motor->SetZeroPos();
+//      left_front_leg_motor->SetZeroPos();
     left_front_leg_motor->MotorEnable();
     osDelay(100);
-    //  left_back_leg_motor->SetZeroPos();
+//      left_back_leg_motor->SetZeroPos();
     left_back_leg_motor->MotorEnable();
     osDelay(100);
-    //  right_front_leg_motor->SetZeroPos();
+//      right_front_leg_motor->SetZeroPos();
     right_front_leg_motor->MotorEnable();
     osDelay(100);
-    //  right_back_leg_motor->SetZeroPos();
+//      right_back_leg_motor->SetZeroPos();
     right_back_leg_motor->MotorEnable();
 
     while (dbus->swl != remote::DOWN) {osDelay(100);}
@@ -349,7 +329,7 @@ void ledTask(const void* args){
         	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
         }
 
-		HAL_Delay(50);
+		osDelay(50);
 	}
 
 
@@ -376,7 +356,7 @@ void RTOS_Default_Task(const void* args) {
 //    	print("motor_start: %d\r\n", motor_start);
 //        print("yaw: %.3f, pitch: %.3f, roll: %.3f\r\n", imu.INS_euler[0] / PI * 180, imu.INS_euler[1] / PI * 180, imu.INS_euler[2] / PI * 180);
 
-        HAL_Delay(10);
+        osDelay(10);
     }
 
 }
