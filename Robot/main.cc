@@ -85,39 +85,10 @@ void imuTask(const void* args){
 	imu.INS_euler[1] = 0.0f;
 	imu.INS_euler[2] = 0.0f;
 
-//    uint16_t count = 0;
-//
-//    float zeroDriftSum[3] = {0.0f, 0.0f, 0.0f};
-//    float zeroDrift[3] = {0.0f, 0.0f, 0.0f};
-
-//    while (true) {
-//		init.input(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13));
-//		if (init.negEdge()){
-//			calibrated = true;
-//			break;
-//		}
-//	}
-
     while (dbus->swr != remote::DOWN) {HAL_Delay(10);}
     init = true;
 
 	while (true) {
-//        if (calibrated) {
-//            if (++count < zeroDriftTry) {
-//                for (int i = 0; i < 3; i++) {
-//                    zeroDriftSum[i] += imu.gyr_rps[i];
-//                }
-//                continue;
-//            } else if (count == zeroDriftTry) {
-//                for (int i = 0; i < 3; ++i) {
-//                    zeroDrift[i] = zeroDriftSum[i] / (float)zeroDriftTry;
-//                }
-//                continue;
-//            }
-//            for (int i = 0; i < 3; ++i) {
-//                imu.gyr_rps[i] -= zeroDrift[i];
-//            }
-
             MahonyAHRSupdateIMU(imu.INS_quat, imu.gyr_rps[0], imu.gyr_rps[1], imu.gyr_rps[2], imu.acc_mps2[0],
                imu.acc_mps2[1], imu.acc_mps2[2]);
 
