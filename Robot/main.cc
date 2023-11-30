@@ -248,21 +248,21 @@ void chassisTask(const void* args){
             osDelay(1);
             control::Motor4310::TransmitOutput(leg_motor4, 1);
             osDelay(1);
-            osDelay(180);
-            left_front_leg_motor->SetOutput(pos, 15, 30, 3, 0);
-            left_back_leg_motor->SetOutput(-pos, -15, 30, 3, 0);
-            right_front_leg_motor->SetOutput(-pos, -15, 30, 3, 0);
-            right_back_leg_motor->SetOutput(pos, 15, 30, 3, 0);
-//            control::Motor4310::TransmitOutput(leg_motors, 4);
-            control::Motor4310::TransmitOutput(leg_motor1, 1);
-            osDelay(1);
-            control::Motor4310::TransmitOutput(leg_motor2, 1);
-            osDelay(1);
-            control::Motor4310::TransmitOutput(leg_motor3, 1);
-            osDelay(1);
-            control::Motor4310::TransmitOutput(leg_motor4, 1);
-            osDelay(1);
-            osDelay(5);
+//            osDelay(120);
+//            left_front_leg_motor->SetOutput(pos, -5, 10, 3, 0);
+//            left_back_leg_motor->SetOutput(-pos, 5, 10, 3, 0);
+//            right_front_leg_motor->SetOutput(-pos, 5, 10, 3, 0);
+//            right_back_leg_motor->SetOutput(pos, -5, 10, 3, 0);
+////            control::Motor4310::TransmitOutput(leg_motors, 4);
+//            control::Motor4310::TransmitOutput(leg_motor1, 1);
+//            osDelay(1);
+//            control::Motor4310::TransmitOutput(leg_motor2, 1);
+//            osDelay(1);
+//            control::Motor4310::TransmitOutput(leg_motor3, 1);
+//            osDelay(1);
+//            control::Motor4310::TransmitOutput(leg_motor4, 1);
+//            osDelay(1);
+//            osDelay(5);
         }
 
         if (dbus->swr == remote::UP) {

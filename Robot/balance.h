@@ -8,7 +8,7 @@ int8_t turn_count = 0;
 float last_raw_yaw = 0.0;
 float current_raw_yaw = 0.0;
 float current_yaw = 0.0;
-float jump_height = demo_height + 0.3;
+float jump_height = demo_height + 0.2;
 bool jump_flag = false;
 
 // unit convert parameters
